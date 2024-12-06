@@ -15,6 +15,8 @@ public class GomoryHuMethod
     private List<int> _initialVertices;
     private List<List<int>> _graph;
     private int _nodesCount;
+    private string _iterations;
+    private string _resultingString;
     
     public GomoryHuMethod(double [,] initialGraphMatrix)
     {
@@ -32,11 +34,11 @@ public class GomoryHuMethod
 
     }
 
-    public double[,] Solve()
+    public (double[,], string, string) Solve()
     {
         if (_graph.Count == _nodesCount)
         {
-            return _solutionGraphMatrix;
+            return (_solutionGraphMatrix, _iterations, _resultingString);
         }
 
         int prevVertex = -1;
@@ -56,41 +58,62 @@ public class GomoryHuMethod
                 prevVertex = nextVertex;
             }
 
-            Console.WriteLine($"Iteration: {_nodesCount - _initialVertices.Count}");
+            _iterations += "---------------------------\n";
             foreach (var list in _graph)
             {
-                Console.Write("{");
+                _iterations += "[";
                 foreach (var vertex in list)
                 {
-                    Console.Write(Convert.ToChar('A' + vertex) + ", ");
+                    _iterations += (Convert.ToChar('A' + vertex) + "; ");
                 }
-                Console.Write("}");
-                Console.WriteLine();
+                _iterations += "]\n";
+                
             }
 
-            Console.WriteLine();
+            _iterations += "\n";
 
         }
+        //
+        // int uno = 0;
+        // var unos = new List<int>();
+        // do{
+        //     foreach (var list in _graph)
+        //     {
+        //         if (list.Count == 1)
+        //         {
+        //             uno++;
+        //             unos.Add(list.First());
+        //         }
+        //     }
+        //     
+        // }while(uno != Adjust(uno, unos));
 
         foreach (var list in _graph)
         {
             SetSolutionMatrix(list);
         }
         
-        return _solutionGraphMatrix;
+        return (_solutionGraphMatrix, _iterations, _resultingString);
     }
+
+    // private int Adjust(int uno, List<int> unos)
+    // {
+    //     foreach (var list in _graph)
+    //     {
+    //         
+    //     }
+    // }
 
     private void SetSolutionMatrix(List<int> blackList)
     {
-        string resultingString;
         
         (int vertex, double cut) = FindMinimalSTCutVertex(blackList);
         
         blackList.Remove(vertex);
         List<int> trackedVertices = [vertex];
         
-        resultingString = $"{Convert.ToChar('A' + vertex)} - {cut}";
-        Console.WriteLine($"{resultingString}");
+        _resultingString += $"{Convert.ToChar('A' + vertex)} - {cut}";
+        //Console.WriteLine($"{_resultingString}");
         
         InsertValuesInMatrix(vertex, cut, trackedVertices);
 
@@ -103,11 +126,12 @@ public class GomoryHuMethod
             
             InsertValuesInMatrix(vertex, cut, trackedVertices);
 
-            resultingString += $" - {Convert.ToChar('A' + vertex)} - {cut}";
-            Console.WriteLine(resultingString);
+            _resultingString += $" - {Convert.ToChar('A' + vertex)} - {cut}";
+            //Console.WriteLine(_resultingString);
         }
 
-        Console.WriteLine();
+        //Console.WriteLine();
+        _resultingString += "\n";
     }
 
     private int FindConnectedVertex(int lastVertex, List<int> blackList)
@@ -173,7 +197,7 @@ public class GomoryHuMethod
                     checkList[^1] = nextVertex;
                     
                     var cut = FindSTCut(checkList.ToList());
-                    if (currentSTCut > cut || (list.Any(v => FindSTCut([v]) > cut) && FindSTCut(list) > cut ))
+                    if (currentSTCut > cut || (list.Any(v => FindSTCut([v]) >= cut) && FindSTCut(list) >= cut ))
                     {
                         currentList = list;
                         currentSTCut = cut;
@@ -191,6 +215,41 @@ public class GomoryHuMethod
 
         return currentSTCut;
     }
+
+    // private double TryToPlaceCustom(int nextVertex, double selfSTcut)
+    // {
+    //     bool canPlace = false;
+    //     List<int>? currentList = null;
+    //     double currentSTCut = selfSTcut;
+    //     foreach (var list in _graph)
+    //     {
+    //         foreach (var vertex in list)
+    //         {
+    //             if (_initialGraphMatrix[nextVertex, vertex] > 0)
+    //             {
+    //                 int[] checkList = new int[list.Count + 1];
+    //                 list.CopyTo(checkList, 0);
+    //                 checkList[^1] = nextVertex;
+    //                 
+    //                 var cut = FindSTCut(checkList.ToList());
+    //                 if (currentSTCut > cut || (list.Any(v => FindSTCut([v]) >= cut) && FindSTCut(list) >= cut ))
+    //                 {
+    //                     currentList = list;
+    //                     currentSTCut = cut;
+    //                     canPlace = true;
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //
+    //     if (canPlace)
+    //         currentList!.Add(nextVertex);
+    //     else
+    //         _graph.Add([nextVertex]);
+    //
+    //     return currentSTCut;
+    // }
 
     private int FindNextVertex(int prevVertex)
     {

@@ -1,14 +1,7 @@
-﻿using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace GomoryHuCalculator;
 
@@ -16,11 +9,11 @@ namespace GomoryHuCalculator;
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 
-public partial class MainWindow : Window
+public partial class MainWindow
 {
     private int _nodeCount;
 
-    public int NodeCount
+    private int NodeCount
     {
         get => _nodeCount;
         set => _nodeCount = value > 2 ? value : 2;
@@ -28,74 +21,44 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        NodeCount = 7;
-        
+        NodeCount = 9;
+
         InitializeComponent();
         GenerateTransportGrid();
         PreDefineGraph();
     }
-    
+
     private void GenerateTransportGrid()
     {
         TransportGrid ??= new Grid();
         TransportGrid.RowDefinitions.Clear();
         TransportGrid.ColumnDefinitions.Clear();
         TransportGrid.Children.Clear();
-    
+
         // Create Row Definitions
         for (var i = 0; i <= NodeCount; i++)
         {
             TransportGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             TransportGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         }
-    
+
         // Create headers (top row and left column)
-        for (var i = 1; i <= NodeCount; i++)
+        for (var i = 0; i <= NodeCount; i++)
         {
-            var rowHeaders = new TextBlock
-            {
-                Text = ((char)('A' + i - 1)).ToString(),
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-            Grid.SetRow(rowHeaders, i);
-            Grid.SetColumn(rowHeaders, 0);
-            TransportGrid.Children.Add(rowHeaders);
-            
-            var columnHeaders = new TextBlock
-            {
-                Text = ((char)('A' + i - 1)).ToString(),
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-            Grid.SetRow(columnHeaders, 0);
-            Grid.SetColumn(columnHeaders, i);
-            TransportGrid.Children.Add(columnHeaders);
+            CreateStyledCell(TransportGrid, 0, i + 1, Convert.ToChar('A' + i).ToString(), Brushes.CornflowerBlue, true);
+            CreateStyledCell(TransportGrid, i + 1, 0, Convert.ToChar('A' + i).ToString(), Brushes.CornflowerBlue, true);
         }
-    
+
         // Fill grid cells with TextBoxes for input (except the first row/column for headers)
         for (var i = 1; i <= NodeCount; i++)
         {
             for (var j = 1; j <= NodeCount; j++)
             {
-                var cell = new TextBox
-                {
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    MinWidth = 30,
-                    MinHeight = 30,
-                };
-    
-                // Attach the validation event handler to each TextBox
-                cell.PreviewTextInput += Cell_PreviewTextInput;
-    
-                Grid.SetRow(cell, i);
-                Grid.SetColumn(cell, j);
-                TransportGrid.Children.Add(cell);
+                CreateStyledCell(TransportGrid, i, j, 0.ToString(),  Brushes.White, false, true);
             }
         }
     }
-    
+
     private void PreDefineGraph()
     {
         // Wikipedia
@@ -108,7 +71,7 @@ public partial class MainWindow : Window
         //     {-1,  2,  4,  1,  0,  2},
         //     {-1, -1, -1,  6,  2,  0},
         // };
-        
+
         // GeekForGeeks
         // double [,]weightMatrix =
         // {
@@ -119,7 +82,7 @@ public partial class MainWindow : Window
         //     {-1,  2,  4,  7,  0,  3},
         //     { 8,  3,  2,  2,  3,  0},
         // };
-        
+
         // DO example
         // double [,]weightMatrix =
         // {
@@ -131,19 +94,19 @@ public partial class MainWindow : Window
         //     {-1, -1,  9,  6, -1,  0, 11},
         //     {-1, -1, -1,  8,  2, 11,  0}
         // };
-        
+
         // My
-        double [,]weightMatrix =
-        {
-            { 0,  5, -1,  5,  3,  8, -1},
-            { 5,  0, -1, -1,  9, -1, -1},
-            {-1, -1,  0,  6,  2, -1,  6},
-            { 5, -1,  6,  0, -1,  7,  6},
-            { 3,  9,  2, -1,  0,  4, -1},
-            { 8, -1, -1,  7,  4,  0, -1},
-            {-1, -1,  6,  6, -1, -1,  0}
-        };
-        
+        // double [,]weightMatrix =
+        // {
+        //     { 0,  5, -1,  5,  3,  8, -1},
+        //     { 5,  0, -1, -1,  9, -1, -1},
+        //     {-1, -1,  0,  6,  2, -1,  6},
+        //     { 5, -1,  6,  0, -1,  7,  6},
+        //     { 3,  9,  2, -1,  0,  4, -1},
+        //     { 8, -1, -1,  7,  4,  0, -1},
+        //     {-1, -1,  6,  6, -1, -1,  0}
+        // };
+
         // Danik
         // int [,]weightMatrix =
         // {
@@ -156,16 +119,55 @@ public partial class MainWindow : Window
         //     {-1, -1, -1,  6, -1, -1,  0,  6},
         //     {-1, -1, -1, -1,  2,  4,  6,  0}
         // };
-        
+
+        // 
+        // double [,]weightMatrix =
+        // {
+        //     { 0,  8, -1,  4, -1, -1, -1},
+        //     { 8,  0,  7, -1, -1, -1,  5},
+        //     {-1,  7,  0,  6,  4, -1,  8},
+        //     { 4, -1,  6,  0,  2, -1,  9},
+        //     {-1, -1,  4,  2,  0,  3, -1},
+        //     {-1, -1, -1, -1,  3,  0,  5},
+        //     {-1,  5,  8,  9, -1,  5,  0}
+        // };
+
+        // // Vova
+        // double [,]weightMatrix =
+        // {
+        //     { 0,  2, -1,  8,  3,  4, -1},
+        //     { 2,  0, -1, -1,  4,  7, -1},
+        //     {-1, -1,  0,  4,  2, -1,  6},
+        //     { 8, -1,  4,  0, -1, -1,  6},
+        //     { 3,  4,  2, -1,  0,  4, -1},
+        //     { 4,  7, -1, -1,  4,  0, -1},
+        //     {-1, -1,  6,  6, -1, -1,  0}
+        // };
+
+        // Max
+        double[,] weightMatrix =
+        {
+            //   a   b   c   d   e   f   g   h   i
+            { 0, 12, 8, -1, -1, 4, 1, -1, -1 },
+            { 12, 0, -1, -1, 14, -1, -1, -1, -1 },
+            { 8, -1, 0, 9, -1, 13, -1, -1, -1 },
+            { -1, -1, 9, 0, -1, -1, -1, -1, 16 },
+            { -1, 14, -1, -1, 0, -1, 9, 2, -1 },
+            { 4, -1, 13, -1, -1, 0, -1, 4, -1 },
+            { 1, -1, -1, -1, 9, -1, 0, -1, -1 },
+            { -1, -1, -1, -1, 2, 4, -1, 0, 6 },
+            { -1, -1, -1, 16, -1, -1, -1, 6, 0 }
+        };
+
         for (var i = 1; i <= NodeCount; i++)
         {
             for (var j = 1; j <= NodeCount; j++)
             {
-                ((TextBox)GetGridElement(TransportGrid, i, j)).Text = weightMatrix[i - 1, j - 1].ToString();
+                ((TextBox)((Border)GetGridElement(TransportGrid, i, j)).Child).Text = weightMatrix[i - 1, j - 1].ToString();
             }
         }
     }
-    
+
     private UIElement GetGridElement(Grid grid, int row, int column)
     {
         foreach (UIElement element in grid.Children)
@@ -176,7 +178,7 @@ public partial class MainWindow : Window
 
         return null;
     }
-    
+
     // Event handler for TextBox validation: allows only numeric input
     private void Cell_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
     {
@@ -192,72 +194,153 @@ public partial class MainWindow : Window
         {
             for (var j = 1; j <= NodeCount; j++)
             {
-                var cell = (TextBox)TransportGrid.Children
-                    .Cast<UIElement>()
-                    .FirstOrDefault(element => Grid.GetRow(element) == i && Grid.GetColumn(element) == j)!;
+                var cell = (TextBox)((Border)GetGridElement(TransportGrid, i, j)).Child;
                 weightMatrix[i - 1, j - 1] = double.Parse(cell?.Text ?? string.Empty);
             }
         }
 
         var gomoryHu = new GomoryHuMethod(weightMatrix);
 
-        var solutionMatrix = gomoryHu.Solve();
-        
-        ShowMatrix(solutionMatrix);
-        
+        var (solutionMatrix, iterations, resultingString) = gomoryHu.Solve();
+
+        ShowMatrix(solutionMatrix, iterations, resultingString);
+
     }
 
-    public void ShowMatrix(double[,] solutionMatrix)
+    private void ShowMatrix(double[,] solutionMatrix, string iterations, string resultingString)
     {
+        var matrixTab = new TabItem { Header = $"Matrix {GridContainer.Items.Count}" };
+        var tabGrid = new Grid
+        {
+            RowDefinitions =
+            {
+                new RowDefinition { Height = GridLength.Auto }
+            },
+            ColumnDefinitions =
+            {
+                new ColumnDefinition
+                {
+                    Width = new GridLength(GridContainer.ActualWidth / 2)
+                },
+                new ColumnDefinition
+                {
+                    Width = new GridLength(GridContainer.ActualWidth / 6)
+                },
+                new ColumnDefinition
+                {
+                    Width = new GridLength(GridContainer.ActualWidth / 3)
+                }
+            }
+        };
+
         Grid dynamicGrid = new Grid
         {
             Margin = new Thickness(10),
-            ShowGridLines = true // Optional: Show grid lines
+            Background = Brushes.White
         };
 
         for (int i = 0; i <= NodeCount; i++)
         {
-            dynamicGrid.RowDefinitions.Add(new RowDefinition());
-            dynamicGrid.ColumnDefinitions.Add(new ColumnDefinition());
-        }
-        
-        CreateCell(dynamicGrid, 0, 0, " ");
-        
-        for (int i = 0; i < NodeCount; i++)
-        {
-            CreateCell(dynamicGrid, 0, i + 1, Convert.ToChar('A' + i).ToString());
-            CreateCell(dynamicGrid, i + 1, 0, Convert.ToChar('A' + i).ToString());
+            dynamicGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            dynamicGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         }
 
+        // Add Headers
+        CreateStyledCell(dynamicGrid, 0, 0, " ", Brushes.WhiteSmoke, true);
+        for (int i = 0; i < NodeCount; i++)
+        {
+            CreateStyledCell(dynamicGrid, 0, i + 1, Convert.ToChar('A' + i).ToString(), Brushes.CornflowerBlue, true);
+            CreateStyledCell(dynamicGrid, i + 1, 0, Convert.ToChar('A' + i).ToString(), Brushes.CornflowerBlue, true);
+        }
+
+        // Fill Matrix Data
         for (int i = 0; i < NodeCount; i++)
         {
             for (int j = 0; j < NodeCount; j++)
             {
-                CreateCell(dynamicGrid, i + 1, j + 1, solutionMatrix[i, j].ToString());
+                CreateStyledCell(dynamicGrid, i + 1, j + 1, solutionMatrix[i, j].ToString(), Brushes.White);
             }
         }
+
+        tabGrid.Children.Add(dynamicGrid);
+        Grid.SetRow(dynamicGrid, 0);
+        Grid.SetColumn(dynamicGrid, 0);
         
-        DynamicGridContainer.Children.Add(dynamicGrid);
+        var panel = new StackPanel
+            {Children = 
+                {new ScrollViewer
+                    {Content = new TextBlock{Text = iterations}, Height = GridContainer.ActualHeight }
+                }, Height = GridContainer.ActualHeight
+            };
+        tabGrid.Children.Add(panel);
+        Grid.SetRow(panel, 0);
+        Grid.SetColumn(panel, 1);
+        
+        panel = new StackPanel
+            {Children = 
+                {new ScrollViewer
+                    {Content = new TextBlock{Text = resultingString}, Height = GridContainer.ActualHeight }
+                }, Height = GridContainer.ActualHeight
+            };
+        tabGrid.Children.Add(panel);
+        Grid.SetRow(panel, 0);
+        Grid.SetColumn(panel, 2);
+        
+        matrixTab.Content = tabGrid;
+        GridContainer.Items.Add(matrixTab);
     }
 
-
-    private void CreateCell(Grid dynamicGrid, int x, int y, string text,  Brush? color = null)
+    private void CreateStyledCell(Grid grid, int row, int col, string text, Brush background, bool isHeader = false, bool isEditable = false)
     {
-        TextBox textBox = new TextBox()
+        Border cellBorder = new Border
         {
-            Text = text,
-            Width = 60,
-            Height = 30,
-            Margin = new Thickness(5),
-            Background = color ?? Brushes.White,
-            IsReadOnly = true // Make the TextBox read-only to prevent editing
+            BorderBrush = Brushes.Gray,
+            BorderThickness = new Thickness(0.5),
+            Background = background
         };
 
-        dynamicGrid.Children.Add(textBox);
+        FrameworkElement cellText;
+        if(!isEditable)
+        {
+            cellText = new TextBlock
+            {
+                Text = text,
+                Foreground = isHeader ? Brushes.White : Brushes.DarkSlateGray,
+                FontWeight = isHeader ? FontWeights.Bold : FontWeights.Normal,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Width = 40,
+                Height = 40,
+                Padding = new Thickness(5)
+            };
+        }
+        else
+        {
+            cellText = new TextBox
+            {
+                Text = text,
+                Foreground = isHeader ? Brushes.White : Brushes.DarkSlateGray,
+                FontWeight = isHeader ? FontWeights.Bold : FontWeights.Normal,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Width = 40,
+                Height = 40,
+                Padding = new Thickness(5),
+                BorderThickness = new Thickness(0),
+                
+                
+            };
 
-        Grid.SetRow(textBox, x);
-        Grid.SetColumn(textBox, y);
+            cellText.PreviewTextInput += Cell_PreviewTextInput;
+        }
+
+        cellBorder.Child = cellText;
+
+        grid.Children.Add(cellBorder);
+        Grid.SetRow(cellBorder, row);
+        Grid.SetColumn(cellBorder, col);
     }
+
 
     private void MinusButton_OnClick(object sender, RoutedEventArgs e)
     {

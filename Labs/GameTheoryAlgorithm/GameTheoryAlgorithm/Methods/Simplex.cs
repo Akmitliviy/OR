@@ -64,7 +64,6 @@ public class Simplex : Method
     {
         if (CheckIfSolved())
         {
-            _mainWindow.CreateAndAddDynamicGridSimplex(_constraints, _cb, _plan, _deriv, _delta, _base);
             decimal[] result = new decimal[_objectiveFunction.Length + 1];
             for (int i = 0; i < _objectiveFunction.Length; i++)
             {
@@ -75,7 +74,9 @@ public class Simplex : Method
             {
                 result[^1] += result[i] * _objectiveFunction[i];
             }
-
+            _f = result[^1];
+            
+            _mainWindow.CreateAndAddDynamicGridSimplex(_constraints, _cb, _plan, _deriv, _delta, _base, _f);
             return result;
         }
 
@@ -109,8 +110,13 @@ public class Simplex : Method
             }
         }
 
+        for (int i = 0; i < _objectiveFunction.Length; i++)
+        {
+            _f += _plan.GetValueOrDefault(i) * _objectiveFunction[i];
+        }
+        
         var table = new Table(_constraints, _cb, _plan, _deriv, _delta, _base);
-        _mainWindow.CreateAndAddDynamicGridSimplex(_constraints, _cb, _plan, _deriv, _delta, _base);
+        _mainWindow.CreateAndAddDynamicGridSimplex(_constraints, _cb, _plan, _deriv, _delta, _base, _f);
 
         RebuildTable(minIndexRow, minIndexColumn);
         FindDelta();

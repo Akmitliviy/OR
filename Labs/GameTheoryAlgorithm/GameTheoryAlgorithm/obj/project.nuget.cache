@@ -1,8 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "Yb3Z2MfsFnQ=",
+  "dgSpecHash": "l30Axp6NTRM=",
   "success": true,
   "projectFilePath": "E:\\A_University\\A_term5\\OR\\Labs\\GameTheoryAlgorithm\\GameTheoryAlgorithm\\GameTheoryAlgorithm.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Akmitliviy\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.11\\microsoft.netcore.app.ref.8.0.11.nupkg.sha512",
+    "C:\\Users\\Akmitliviy\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.11\\microsoft.windowsdesktop.app.ref.8.0.11.nupkg.sha512",
+    "C:\\Users\\Akmitliviy\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.11\\microsoft.aspnetcore.app.ref.8.0.11.nupkg.sha512",
+    "C:\\Users\\Akmitliviy\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.11\\microsoft.netcore.app.host.win-x64.8.0.11.nupkg.sha512"
+  ],
   "logs": []
 }

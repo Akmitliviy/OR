@@ -107,16 +107,18 @@ public class GameTheory
 
         _gameMatrix = newGameMatrix;
 
-        Console.WriteLine("Matrix with reduced rows:");
-        for (int i = 0; i < _gameMatrix.GetLength(0); i++)
-        {
-            for (int j = 0; j < _gameMatrix.GetLength(1); j++)
-            {
-                Console.Write(_gameMatrix[i, j] + ", ");
-            }
-            Console.WriteLine();
-        }
-        Console.WriteLine();
+        // Console.WriteLine("Matrix with reduced rows:");
+        // for (int i = 0; i < _gameMatrix.GetLength(0); i++)
+        // {
+        //     for (int j = 0; j < _gameMatrix.GetLength(1); j++)
+        //     {
+        //         Console.Write(_gameMatrix[i, j] + ", ");
+        //     }
+        //     Console.WriteLine();
+        // }
+        // Console.WriteLine();
+        
+        _mainWindow.ShowReducedMatrix(_gameMatrix, "rows");
         
         return true;
     }
@@ -165,16 +167,18 @@ public class GameTheory
         
         _gameMatrix = newGameMatrix;
 
-        Console.WriteLine("Matrix with reduced columns:");
-        for (int i = 0; i < _gameMatrix.GetLength(0); i++)
-        {
-            for (int j = 0; j < _gameMatrix.GetLength(1); j++)
-            {
-                Console.Write(_gameMatrix[i, j] + ", ");
-            }
-            Console.WriteLine();
-        }
-        Console.WriteLine();
+        // Console.WriteLine("Matrix with reduced columns:");
+        // for (int i = 0; i < _gameMatrix.GetLength(0); i++)
+        // {
+        //     for (int j = 0; j < _gameMatrix.GetLength(1); j++)
+        //     {
+        //         Console.Write(_gameMatrix[i, j] + ", ");
+        //     }
+        //     Console.WriteLine();
+        // }
+        // Console.WriteLine();
+        
+        _mainWindow.ShowReducedMatrix(_gameMatrix, "columns");
 
         return true;
     }

@@ -58,28 +58,12 @@ public partial class MainWindow : Window
         // Create headers (top row and left column)
         for (int i = 1; i <= _a; i++)
         {
-            TextBlock supplierHeader = new TextBlock
-            {
-                Text = "A" + i,
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-            Grid.SetRow(supplierHeader, i);
-            Grid.SetColumn(supplierHeader, 0);
-            TransportGrid.Children.Add(supplierHeader);
+            CreateStyledCell(TransportGrid, i, 0, "A" + (i - 1), Brushes.CornflowerBlue, true);
         }
 
         for (int j = 1; j <= _b; j++)
         {
-            TextBlock consumerHeader = new TextBlock
-            {
-                Text = "B" + j,
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-            Grid.SetRow(consumerHeader, 0);
-            Grid.SetColumn(consumerHeader, j);
-            TransportGrid.Children.Add(consumerHeader);
+            CreateStyledCell(TransportGrid, 0, j, "B" + (j - 1), Brushes.CornflowerBlue, true);
         }
 
         // Fill grid cells with TextBoxes for input (except the first row/column for headers)
@@ -87,20 +71,7 @@ public partial class MainWindow : Window
         {
             for (int j = 1; j <= _b; j++)
             {
-                TextBox cell = new TextBox
-                {
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    MinWidth = 30,
-                    MinHeight = 30,
-                };
-
-                // Attach the validation event handler to each TextBox
-                cell.PreviewTextInput += Cell_PreviewTextInput;
-
-                Grid.SetRow(cell, i);
-                Grid.SetColumn(cell, j);
-                TransportGrid.Children.Add(cell);
+                CreateStyledCell(TransportGrid, i, j, 0.ToString(),  Brushes.White, false, true);
             }
         }
     }
@@ -111,6 +82,7 @@ public partial class MainWindow : Window
         Regex regex = new Regex("[^0-9]+"); // Only digits are allowed
         e.Handled = regex.IsMatch(e.Text);
     }
+
     private void SolveButton_OnClick(object sender, RoutedEventArgs e)
     {
         // Read game matrix from the grid
@@ -119,35 +91,61 @@ public partial class MainWindow : Window
         {
             for (int j = 1; j <= _b; j++)
             {
-                TextBox cell = (TextBox)TransportGrid.Children
-                    .Cast<UIElement>()
-                    .FirstOrDefault(e => Grid.GetRow(e) == i && Grid.GetColumn(e) == j);
+                var cell = (TextBox)((Border)GetGridElement(TransportGrid, i, j)).Child;
                 gameMatrix[i - 1, j - 1] = decimal.Parse(cell.Text);
             }
         }
 
         // Solve using GameTheory algorithm
         var gameTheory = new GameTheory(gameMatrix, this);
-        (List<decimal> aStrategy, List<decimal> bStrategy, decimal gamePrice)  = gameTheory.Solve();
+        (List<decimal> aStrategy, List<decimal> bStrategy, decimal gamePrice) = gameTheory.Solve();
         aStrategy = aStrategy.Select(x => Math.Round(x, 2)).ToList();
         bStrategy = bStrategy.Select(x => Math.Round(x, 2)).ToList();
         gamePrice = Math.Round(gamePrice, 2);
 
         // Display result (total cost)
-        MessageBox.Show(
-            $"Strategy for A: ({string.Join("; ", aStrategy)})" +
-                        $"\nStrategy for B: ({string.Join("; ", bStrategy)})" +
-                        $"\nGame price: {gamePrice}", "Result");
+        ShowResultInNewTab(aStrategy, bStrategy, gamePrice);
+    }
+    public void ShowResultInNewTab(List<decimal> aStrategy, List<decimal> bStrategy, decimal gamePrice)
+    {
+        // Create a new tab for the result
+        var resultTab = new TabItem { Header = "Result" };
+
+        // Create a TextBlock to display the result
+        var resultTextBlock = new TextBlock
+        {
+            Text = $"Player A strategy is [{string.Join("; ", aStrategy)}]" +
+                   $"\nPlayer B strategy is [{string.Join("; ", bStrategy)}]" +
+                   $"\nPrice of the game is {gamePrice}",
+            FontSize = 16,
+            Margin = new Thickness(10),
+            TextWrapping = TextWrapping.Wrap
+        };
+
+        // Add the TextBlock to the TabItem
+        resultTab.Content = new ScrollViewer
+        {
+            Content = resultTextBlock,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+
+        // Add the new tab to the TabControl
+        GridContainer.Items.Add(resultTab);
     }
 
+
     public void CreateAndAddDynamicGridSimplex(decimal[,] constraints, decimal[] cb, Dictionary<int, decimal> plan,
-        decimal[] deriv, decimal[] delta, int[] myBase)
+        decimal[] deriv, decimal[] delta, int[] myBase, decimal f)
     {
-        // Create a new grid
-        Grid dynamicGrid = new Grid
+        // Create a new tab for the simplex grid
+        var simplexTab = new TabItem { Header = $"Simplex Grid {GridContainer.Items.Count}" };
+
+        // Create the grid to display the simplex table
+        var dynamicGrid = new Grid
         {
             Margin = new Thickness(10),
-            ShowGridLines = true // Optional: Show grid lines
+            Background = Brushes.White
         };
 
         int rows = constraints.GetLength(0) + 2;
@@ -155,88 +153,144 @@ public partial class MainWindow : Window
 
         // Define rows and columns for the grid
         for (int i = 0; i < rows; i++)
-        {
-            dynamicGrid.RowDefinitions.Add(new RowDefinition());
-        }
+            dynamicGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
         for (int j = 0; j < cols; j++)
-        {
-            dynamicGrid.ColumnDefinitions.Add(new ColumnDefinition());
-        }
+            dynamicGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
+        // Add Headers
+        CreateStyledCell(dynamicGrid, 0, 0, "Base", Brushes.CornflowerBlue, true);
+        CreateStyledCell(dynamicGrid, 0, 1, "Cb", Brushes.CornflowerBlue, true);
+        CreateStyledCell(dynamicGrid, 0, 2, "Plan", Brushes.CornflowerBlue, true);
 
-        CreateCell(dynamicGrid, 0, 0, "Base");
-        CreateCell(dynamicGrid, 0, 1, "Cb");
-        CreateCell(dynamicGrid, 0, 2, "Plan");
+        for (int i = 3; i < cols - 1; i++)
+            CreateStyledCell(dynamicGrid, 0, i, $"x{i - 2}", Brushes.CornflowerBlue, true);
 
-        for (int i = 3; i < constraints.GetLength(1) + 3; i++)
-        {
-            CreateCell(dynamicGrid, 0, i, string.Format("x" + (i - 2)));
-        }
+        CreateStyledCell(dynamicGrid, 0, cols - 1, "der", Brushes.CornflowerBlue, true);
 
-        CreateCell(dynamicGrid, 0, cols - 1, "der");
-
+        // Fill Data
         for (int i = 1; i < deriv.Length + 1; i++)
-        {
-            CreateCell(dynamicGrid, i, cols - 1, Math.Round(deriv[i - 1], 2).ToString());
-        }
+            CreateStyledCell(dynamicGrid, i, cols - 1, deriv[i - 1].ToString("F2"), Brushes.White);
 
         for (int i = 1; i < myBase.Length + 1; i++)
-        {
-            CreateCell(dynamicGrid, i, 0, string.Format("x" + (myBase[i - 1] + 1)));
-        }
+            CreateStyledCell(dynamicGrid, i, 0, $"x{myBase[i - 1] + 1}", Brushes.White);
 
         for (int i = 1; i < myBase.Length + 1; i++)
-        {
-            CreateCell(dynamicGrid, i, 1, string.Format(cb[i - 1].ToString()));
-        }
+            CreateStyledCell(dynamicGrid, i, 1, cb[i - 1].ToString("F2"), Brushes.White);
 
         for (int i = 1; i < myBase.Length + 1; i++)
-        {
-            CreateCell(dynamicGrid, i, 2, string.Format(Math.Round(plan[myBase[i - 1]], 2).ToString()));
-        }
-
+            CreateStyledCell(dynamicGrid, i, 2, plan[myBase[i - 1]].ToString("F2"), Brushes.White);
 
         for (int i = 1; i < constraints.GetLength(0) + 1; i++)
         {
             for (int j = 3; j < constraints.GetLength(1) + 3; j++)
             {
-                CreateCell(dynamicGrid, i, j, Math.Round(constraints[i - 1, j - 3], 2).ToString());
+                CreateStyledCell(dynamicGrid, i, j, constraints[i - 1, j - 3].ToString("F2"), Brushes.White);
             }
         }
 
-        CreateCell(dynamicGrid, rows - 1, 0, "F*");
-        CreateCell(dynamicGrid, rows - 1, 1, "0");
-        CreateCell(dynamicGrid, rows - 1, 2, "0");
-
+        // Final Row (Delta)
+        CreateStyledCell(dynamicGrid, rows - 1, 0, "F*", Brushes.CornflowerBlue, true);
+        CreateStyledCell(dynamicGrid, rows - 1, 1, " ", Brushes.White);
+        CreateStyledCell(dynamicGrid, rows - 1, 2, f.ToString("F2"), Brushes.White);
+        CreateStyledCell(dynamicGrid, rows - 1, cols - 1, " ", Brushes.White);
         for (int i = 3; i < delta.Length + 3; i++)
-        {
-            CreateCell(dynamicGrid, rows - 1, i, Math.Round(delta[i - 3], 2).ToString());
-        }
+            CreateStyledCell(dynamicGrid, rows - 1, i, delta[i - 3].ToString("F2"), Brushes.White);
 
-        CreateCell(dynamicGrid, rows - 1, cols - 1, "0");
-
-        // Add the dynamic grid to the parent container (StackPanel)
-        DynamicGridContainer.Children.Add(dynamicGrid);
+        // Add the grid to the tab
+        simplexTab.Content = dynamicGrid;
+        GridContainer.Items.Add(simplexTab);
     }
-
-    private void CreateCell(Grid dynamicGrid, int x, int y, string text,  Brush? color = null)
+    
+        public void ShowReducedMatrix(decimal[,] matrix, string reduceDimension)
     {
-        TextBox textBox = new TextBox()
+        // Create a new tab for the simplex grid
+        var simplexTab = new TabItem { Header = $"Reduced Matrix by {reduceDimension}" };
+
+        // Create the grid to display the simplex table
+        var dynamicGrid = new Grid
         {
-            Text = text,
-            Width = 60,
-            Height = 30,
-            Margin = new Thickness(5),
-            Background = color ?? Brushes.White,
-            IsReadOnly = true // Make the TextBox read-only to prevent editing
+            Margin = new Thickness(10),
+            Background = Brushes.White
         };
 
-        dynamicGrid.Children.Add(textBox);
+        int rows = matrix.GetLength(0);
+        int cols = matrix.GetLength(1);
 
-        Grid.SetRow(textBox, x);
-        Grid.SetColumn(textBox, y);
+        // Define rows and columns for the grid
+        for (int i = 0; i < rows; i++)
+            dynamicGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        for (int j = 0; j < cols; j++)
+            dynamicGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        for (int i = 0; i < matrix.GetLength(0); i++)
+        {
+            for (int j = 0; j < matrix.GetLength(1); j++)
+            {
+                CreateStyledCell(dynamicGrid, i, j, matrix[i, j].ToString("F2"), Brushes.White);
+            }
+        }
+
+        // Add the grid to the tab
+        simplexTab.Content = dynamicGrid;
+        GridContainer.Items.Add(simplexTab);
     }
+
+    private void CreateStyledCell(Grid grid, int row, int col, string text, Brush background, bool isHeader = false,
+        bool isEditable = false)
+    {
+        Border cellBorder = new Border
+        {
+            BorderBrush = Brushes.Gray,
+            BorderThickness = new Thickness(0.5),
+            Background = background
+        };
+
+        FrameworkElement cellText;
+        if (!isEditable)
+        {
+            cellText = new TextBlock
+            {
+                Text = text,
+                TextAlignment = TextAlignment.Center,
+                Foreground = isHeader ? Brushes.White : Brushes.DarkSlateGray,
+                FontWeight = isHeader ? FontWeights.Bold : FontWeights.Normal,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Width = 70,
+                Height = 70,
+                Padding = new Thickness(5)
+            };
+        }
+        else
+        {
+            cellText = new TextBox
+            {
+                Text = text,
+                TextAlignment = TextAlignment.Center,
+                Foreground = isHeader ? Brushes.White : Brushes.DarkSlateGray,
+                FontWeight = isHeader ? FontWeights.Bold : FontWeights.Normal,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Width = 70,
+                Height = 70,
+                Padding = new Thickness(5),
+                BorderThickness = new Thickness(0),
+
+
+            };
+
+            cellText.PreviewTextInput += Cell_PreviewTextInput;
+        }
+
+        cellBorder.Child = cellText;
+
+        grid.Children.Add(cellBorder);
+        Grid.SetRow(cellBorder, row);
+        Grid.SetColumn(cellBorder, col);
+    }
+
 
     private void PreDefine()
     {
@@ -249,8 +303,9 @@ public partial class MainWindow : Window
         //     
         // AComboBox.SelectedValue = "4";
         // BComboBox.SelectedValue = "5";
-        
-        decimal[,] gameMatrix = {
+
+        decimal[,] gameMatrix =
+        {
             { 9M, 3, 1, 4, 3, 2 },
             { 7, 0, 3, 2, 3, 1 },
             { 4, 5, 2, 7, 3, 3 },
@@ -259,16 +314,16 @@ public partial class MainWindow : Window
             { 6, 5, 4, 5, 5, 6 }
         };
 
-            
+
         AComboBox.SelectedValue = "6";
         BComboBox.SelectedValue = "6";
-        
+
 
         for (int i = 1; i <= _a; i++)
         {
             for (int j = 1; j <= _b; j++)
             {
-                ((TextBox)GetGridElement(TransportGrid, i, j)).Text = gameMatrix[i - 1, j - 1].ToString();
+                ((TextBox)((Border)GetGridElement(TransportGrid, i, j)).Child).Text = gameMatrix[i - 1, j - 1].ToString();
             }
         }
 
@@ -283,6 +338,7 @@ public partial class MainWindow : Window
                 return element;
             }
         }
+
         return null;
     }
 }

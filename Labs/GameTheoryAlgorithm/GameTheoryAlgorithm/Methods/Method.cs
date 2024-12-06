@@ -31,6 +31,7 @@ public abstract class Method
     protected decimal[] _deriv;
     protected decimal[] _results;
     protected int[] _base;
+    protected decimal _f;
     protected MainWindow _mainWindow;
     
     public abstract decimal[] Solve();
